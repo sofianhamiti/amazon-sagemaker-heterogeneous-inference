@@ -1,6 +1,6 @@
 import sys
-import time
 import subprocess
+import boto3
 from sagemaker_training import environment
 
 # INSTANCE GROUP NAMES
@@ -13,27 +13,22 @@ def start_process(params):
     subprocess.run(params)
 
 
-# def shutdown_triton(triton_host):
-#     for i in range(0, 10):
-#         try:
-#             if i > 0:
-#                 print(f"Attempting to shutdown the Triton server")
-#                 time.sleep(5)
-#                 sys.exit(0)
-#         except Exception as e:
-#             print(f"Failed to shutdown triton server in {triton_host} due to: {e}")
+def shutdown_job(job_name):
+    sm_client = boto3.client("sagemaker", region_name="eu-west-1")
+    sm_client.stop_training_job(TrainingJobName=job_name)
 
 
 def main():
     env = environment.Environment()
 
     triton_host = env.instance_groups_dict[TRITON_GROUP]["hosts"][0]
+    job_name = env.job_name
 
     if env.current_instance_group == PROCESSING_GROUP:
         start_process(
             ["/usr/bin/python3", "processing.py", "--triton-host", triton_host]
         )
-        # shutdown_triton(triton_host)
+        shutdown_job(job_name)
 
     elif env.current_instance_group == TRITON_GROUP:
         start_process(["sh", "run_triton.sh"])

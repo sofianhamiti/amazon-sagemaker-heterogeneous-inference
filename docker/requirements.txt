@@ -2,4 +2,5 @@ pillow
 nvidia-pyindex
 attrdict
 tritonclient[all]
+boto3
 sagemaker-training==4.4.5
