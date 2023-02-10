@@ -8,12 +8,12 @@ PROCESSING_GROUP = "processing_group"
 TRITON_GROUP = "triton_group"
 
 
-def start_process(params):
+def run_command(params):
     print(f"Opening process: {params}")
     subprocess.run(params)
 
 
-def shutdown_job(job_name):
+def shutdown_job(job_name, triton_host):
     sm_client = boto3.client("sagemaker", region_name="eu-west-1")
     sm_client.stop_training_job(TrainingJobName=job_name)
 
@@ -25,13 +25,11 @@ def main():
     job_name = env.job_name
 
     if env.current_instance_group == PROCESSING_GROUP:
-        start_process(
-            ["/usr/bin/python3", "processing.py", "--triton-host", triton_host]
-        )
-        shutdown_job(job_name)
+        run_command(["/usr/bin/python3", "processing.py", "--triton-host", triton_host])
+        shutdown_job(job_name, triton_host)
 
     elif env.current_instance_group == TRITON_GROUP:
-        start_process(["sh", "run_triton.sh"])
+        run_command(["sh", "run_triton.sh"])
 
     else:
         raise Exception(f"Unknown instance group: {env.current_instance_group}")
